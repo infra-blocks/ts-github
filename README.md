@@ -1,21 +1,6 @@
-# ts-lib-template
+# ts-github
 
-This repository is a template to generate repositories meant to hold the source code
-of NPM packages written in TypeScript.
-
-Follow these steps after instantiating the template:
-- Update the .nvmrc version file
-- Update the package.json
-  - Rename the package
-  - Update the `engines` section
-- Update the dependencies
-- Run `nvm install`
-- Run `npm install`
-- Run `npm run compile && npm run lint && npm run test`
-- Configure CodeCov
-- Add the publication labels on the new repository: `patch`, `minor`, `major`, `no version`.
-- Rename the header of this document to match the repository
-- Replace this section of this document to include a description of the new package
+GitHub and GitHub actions related utilities.
 
 ## Development
 
