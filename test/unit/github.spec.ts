@@ -1,9 +1,4 @@
-import {
-  GitHubClient,
-  GitHubRepositoryClient,
-  isNpmPublishLabel,
-  NpmPublishLabel,
-} from "../../src/github.js";
+import { GitHubClient, GitHubRepositoryClient } from "../../src/github.js";
 import * as sinon from "sinon";
 import { expect, fake } from "@infra-blocks/test";
 
@@ -62,22 +57,6 @@ describe("github", function () {
     });
     it("should dispatch when deleting issue comment", async function () {
       await expectsDispatch("deleteIssueComment", { commentId: 1234567890 });
-    });
-  });
-  describe(isNpmPublishLabel.name, function () {
-    const valid = ["no version", "patch", "minor", "major"];
-    for (const label of valid) {
-      it(`should return true for '${label}'`, function () {
-        expect(isNpmPublishLabel(label)).to.be.true;
-        // Enforce it compiles.
-        if (isNpmPublishLabel(label)) {
-          const typeChecked: NpmPublishLabel = label;
-          expect(typeChecked).to.equal(label);
-        }
-      });
-    }
-    it("should return false for invalid label", function () {
-      expect(isNpmPublishLabel("deploy dev0")).to.be.false;
     });
   });
 });

@@ -385,23 +385,6 @@ export function createGitHubClient(params: {
 }
 
 /**
- * NPM publish labels available for the NPM publish action.
- */
-export type NpmPublishLabel = "no version" | "patch" | "minor" | "major";
-
-/**
- * Returns true if the provided label has the conventional format for an NPM publish label,
- * false otherwise.
- *
- * Also acts as a typeguard for Typescript.
- *
- * @param label - The label to test
- */
-export function isNpmPublishLabel(label: string): label is NpmPublishLabel {
-  return ["no version", "patch", "minor", "major"].includes(label);
-}
-
-/**
  * Mister Robot is the avatar providing comments on the pull requests.
  *
  * His comments are meant to be singletons on the pull requests. Meaning, if
