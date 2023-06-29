@@ -1,0 +1,20 @@
+name: Test
+
+on:
+  push:
+    # This turns off running for tags
+    branches:
+      - "**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: infrastructure-blocks/github-action-typescript-docker-template@feature/first-iteration
+        with:
+          example: "some input"
