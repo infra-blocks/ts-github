@@ -5,9 +5,11 @@ import {
   Event,
   getInputs,
   parseEvent,
+  setOutputs,
   stringInput,
-} from "../../src/github-action.js";
+} from "../../src/index.js";
 import { expect } from "@infra-blocks/test";
+import * as sinon from "sinon";
 
 describe("github-action", function () {
   describe(parseEvent.name, function () {
@@ -241,5 +243,30 @@ describe("github-action", function () {
         "eight",
       ]);
     });
+  });
+  describe(setOutputs.name, function () {
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    /*
+    Only run this test outside the GitHub actions context.
+    Outputs are written to file on CI.
+     */
+    if (process.env.GITHUB_OUTPUT == null) {
+      it("should output all the properties", function () {
+        sinon.spy(process.stdout, "write");
+        setOutputs({
+          "output-1": "My first output",
+          OTHER_OUTPUT: "The other one, I guess",
+        });
+        expect(process.stdout.write).to.have.been.calledWith(
+          "::set-output name=output-1::My first output\n"
+        );
+        expect(process.stdout.write).to.have.been.calledWith(
+          "::set-output name=OTHER_OUTPUT::The other one, I guess\n"
+        );
+      });
+    }
   });
 });
