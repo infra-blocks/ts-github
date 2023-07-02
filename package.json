@@ -7,7 +7,7 @@
     "node": ">=18.0.0"
   },
   "files": [
-    "lib/**/*.{js,d.ts}"
+    "lib/**/*.{js,d.ts,map}"
   ],
   "type": "module",
   "scripts": {
@@ -15,7 +15,7 @@
     "build": "npm run clean && tsc --project tsconfig.build.json",
     "compile": "tsc",
     "clean": "rm -rf lib && rm -f infra-blocks-*.tgz",
-    "lint": "eslint --ext .js,.ts --max-warnings 0 .",
+    "lint": "eslint --ext .js,.ts,.cjs,.mjs --max-warnings 0 .",
     "test": "npm run test:unit",
     "test:coverage": "c8 npm run test",
     "test:coverage:lcov": "c8 --reporter=lcov npm run test",
@@ -42,7 +42,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "mocha": "^10.2.0",
     "prettier": "^2.8.8",
-    "sinon": "^15.1.0",
+    "sinon": "^15.2.0",
     "sinon-chai": "^3.7.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
@@ -50,6 +50,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@actions/core": "^1.10.0",
     "@octokit/core": "^4.2.4",
     "verror": "^1.10.1"
   }

@@ -1,6 +1,5 @@
-// TODO: into lib.
-
 import VError = require("verror");
+import * as core from "@actions/core";
 
 /**
  * Typed enum of possible GitHub actions events.
@@ -205,4 +204,20 @@ export function getInputs<T>(inputValidators: {
  */
 function getInput(name: string): string | undefined {
   return process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`];
+}
+
+/**
+ * GitHub action outputs are simple strings.
+ */
+export type Outputs = Record<string, string>;
+
+/**
+ * Sets all the provided outputs as the action's outputs.
+ *
+ * @param outputs - The outputs to set for this action.
+ */
+export function setOutputs(outputs: Outputs) {
+  for (const [key, value] of Object.entries(outputs)) {
+    core.setOutput(key, value);
+  }
 }
