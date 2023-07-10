@@ -1,6 +1,6 @@
 import { Octokit } from "@octokit/core";
 import { components } from "@octokit/openapi-types";
-import VError = require("verror");
+import VError from "verror";
 
 export type PullRequest = components["schemas"]["pull-request-simple"];
 export type IssueComment = components["schemas"]["issue-comment"];
