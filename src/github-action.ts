@@ -1,4 +1,4 @@
-import VError = require("verror");
+import VError from "verror";
 import * as core from "@actions/core";
 
 /**
