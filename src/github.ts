@@ -6,6 +6,9 @@ export type PullRequest = components["schemas"]["pull-request-simple"];
 export type RepositoryShort = components["schemas"]["minimal-repository"];
 export type Repository = components["schemas"]["full-repository"];
 export type IssueComment = components["schemas"]["issue-comment"];
+export type User =
+  | components["schemas"]["private-user"]
+  | components["schemas"]["public-user"];
 
 const ERROR_NAME = "GitHubClientError";
 
@@ -152,16 +155,76 @@ export class GitHubClient {
   }
 
   /**
+   * Returns user information.
+   *
+   * The user can be an organization.
+   *
+   * @param params.user - The user or organization's name.
+   */
+  async getUser(params: { user: string }) {
+    const { user } = params;
+    try {
+      const response = await this.octokit.request("GET /users/{username}", {
+        username: user,
+      });
+      return response.data;
+    } catch (err) {
+      throw new VError(
+        { cause: err as Error, name: ERROR_NAME },
+        `error getting user ${params.user}`
+      );
+    }
+  }
+
+  /**
+   * Returns true if the provided owner is a GitHub organization.
+   *
+   * @param params.owner - The owner's name.
+   */
+  async isOrganization(params: { owner: string }) {
+    const { owner } = params;
+
+    try {
+      const info = await this.getUser({ user: owner });
+      return info.type === "Organization";
+    } catch (err) {
+      throw new VError(
+        { cause: err as Error, name: ERROR_NAME },
+        `error checking if ${params.owner} is an organization`
+      );
+    }
+  }
+
+  /**
+   * Returns true if the provided owner is a GitHub user.
+   *
+   * @param params.owner - The owner's name.
+   */
+  async isUser(params: { owner: string }) {
+    const { owner } = params;
+
+    try {
+      const info = await this.getUser({ user: owner });
+      return info.type === "User";
+    } catch (err) {
+      throw new VError(
+        { cause: err as Error, name: ERROR_NAME },
+        `error checking if ${params.owner} is an organization`
+      );
+    }
+  }
+
+  /**
    * AsyncGenerator over the repositories of a given organization.
    *
    * Paginates the responses of the `/orgs/{org}/repos` endpoint.
    *
-   * @param params.org - The organization to get the repos from.
+   * @param params.organization - The organization to get the repos from.
    * @param options - See https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-organization-repositories
    */
-  async *paginateListOrgRepositories(
+  async *paginateListOrganizationRepositories(
     params: {
-      org: string;
+      organization: string;
     },
     options?: {
       type?: "all" | "public" | "private" | "forks" | "sources" | "member";
@@ -170,7 +233,7 @@ export class GitHubClient {
       perPage?: number;
     }
   ): AsyncGenerator<RepositoryShort[], void> {
-    const { org } = params;
+    const { organization } = params;
     const {
       type,
       sort,
@@ -184,7 +247,7 @@ export class GitHubClient {
 
       do {
         const response = await this.octokit.request("GET /orgs/{org}/repos", {
-          org,
+          org: organization,
           type,
           sort,
           direction,
@@ -201,35 +264,28 @@ export class GitHubClient {
     } catch (err) {
       throw new VError(
         { cause: err as Error, name: ERROR_NAME },
-        `error paginating organization repositories for org: ${org}`
+        `error paginating organization repositories for organization: ${organization}`
       );
     }
   }
 
   /**
-   * Lists all the repositories of a given org.
+   * Lists all the repositories of a given organization.
    *
    * Leverages #paginateListOrgRepositories to accumulate all the repositories into an array and returns
    * that result.
    *
-   * @param params.org - The org to list the repos of.
+   * @param params - See #paginateListOrganizationRepositories
    */
-  async listOrgRepositories(
-    params: {
-      org: string;
-    },
-    options?: {
-      type?: "all" | "public" | "private" | "forks" | "sources" | "member";
-      sort?: "created" | "updated" | "pushed" | "full_name";
-      direction?: "asc" | "desc";
-    }
+  async listOrganizationRepositories(
+    ...params: Parameters<GitHubClient["paginateListOrganizationRepositories"]>
   ): Promise<RepositoryShort[]> {
+    const { organization } = params[0];
     try {
       const repos = [];
 
-      for await (const page of this.paginateListOrgRepositories(
-        params,
-        options
+      for await (const page of this.paginateListOrganizationRepositories(
+        ...params
       )) {
         repos.push(...page);
       }
@@ -238,7 +294,93 @@ export class GitHubClient {
     } catch (err) {
       throw new VError(
         { cause: err as Error, name: ERROR_NAME },
-        `error listing repositories for org ${params.org}`
+        `error listing repositories for organization ${organization}`
+      );
+    }
+  }
+
+  /**
+   * AsyncGenerator over the repositories of a given user.
+   *
+   * Paginates the responses of the `/users/{user}/repos` endpoint.
+   *
+   * @param params.user - The user to get the repos from.
+   * @param options - See https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
+   */
+  async *paginateListUserRepositories(
+    params: {
+      user: string;
+    },
+    options?: {
+      type?: "owner" | "all" | "member";
+      sort?: "created" | "updated" | "pushed" | "full_name";
+      direction?: "asc" | "desc";
+      perPage?: number;
+    }
+  ): AsyncGenerator<RepositoryShort[], void> {
+    const { user } = params;
+    const {
+      type,
+      sort,
+      direction,
+      perPage = DEFAULT_REPOS_PER_PAGE,
+    } = options || {};
+
+    try {
+      let page = 1;
+      let repos = [];
+
+      do {
+        const response = await this.octokit.request(
+          "GET /users/{username}/repos",
+          {
+            username: user,
+            type,
+            sort,
+            direction,
+            per_page: perPage,
+            page,
+          }
+        );
+
+        repos = response.data;
+        if (repos.length > 0) {
+          yield response.data;
+        }
+        page++;
+      } while (repos.length > 0);
+    } catch (err) {
+      throw new VError(
+        { cause: err as Error, name: ERROR_NAME },
+        `error paginating user repositories for user: ${user}`
+      );
+    }
+  }
+
+  /**
+   * Lists all the repositories of a given user.
+   *
+   * Leverages #paginateListUserRepositories to accumulate all the repositories into an array and returns
+   * that result.
+   *
+   * @param params - See #paginateListUserRepositories
+   */
+  async listUserRepositories(
+    ...params: Parameters<GitHubClient["paginateListUserRepositories"]>
+  ): Promise<RepositoryShort[]> {
+    const { user } = params[0];
+    try {
+      const repos = [];
+
+      for await (const page of this.paginateListUserRepositories(...params)) {
+        repos.push(...page);
+      }
+
+      return repos;
+    } catch (err) {
+      throw new VError(
+        { cause: err as Error, name: ERROR_NAME },
+        `error listing repositories for user ${user}`
       );
     }
   }
@@ -246,7 +388,7 @@ export class GitHubClient {
   /**
    * Describes a repository.
    *
-   * This endpoint returns more info than listing org repositories, for example.
+   * This endpoint returns more info than listing organization repositories, for example.
    *
    * @param params.owner - The repository owner
    * @param params.repository - The repository name
