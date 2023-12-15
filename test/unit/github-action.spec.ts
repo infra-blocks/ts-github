@@ -43,10 +43,10 @@ describe("github-action", function () {
     });
   });
   describe(getInputs.name, function () {
-    const OLD_ENV = process.env;
+    const OLD_ENV = { ...process.env };
 
     afterEach("reset env", function () {
-      process.env = OLD_ENV;
+      process.env = { ...OLD_ENV };
     });
 
     describe(stringInput.name, function () {
@@ -87,6 +87,53 @@ describe("github-action", function () {
         });
         expect(inputs.test2).to.equal("good");
       });
+      it("should return the expected value when the options are an empty object", function () {
+        process.env.INPUT_STUFF = "empty-object";
+        // Adding types to make sure it compiles as expected.
+        const inputs: { stuff: string } = getInputs({
+          stuff: stringInput({}),
+        });
+        expect(inputs.stuff).to.equal("empty-object");
+      });
+      it("should work with a valid choice value", function () {
+        process.env.INPUT_CHOICE = "two";
+
+        // Adding types to make sure it compiles as expected.
+        type Choice = "one" | "two" | "three";
+        const inputs: { choice: Choice } = getInputs({
+          choice: stringInput<Choice>({ choices: ["one", "two", "three"] }),
+        });
+        expect(inputs.choice).to.equal("two");
+      });
+      it("should work with a default choice value", function () {
+        // Adding types to make sure it compiles as expected.
+        type Choice = "one" | "two" | "three";
+        const inputs: { choice: Choice } = getInputs({
+          choice: stringInput<Choice>({
+            choices: ["one", "two", "three"],
+            default: "one",
+          }),
+        });
+        expect(inputs.choice).to.equal("one");
+      });
+      it("should work with a default choice value of undefined", function () {
+        type Choice = "one" | "two" | "three";
+        const inputs: { choice: Choice | undefined } = getInputs({
+          choice: stringInput<Choice>({
+            choices: ["one", "two", "three"],
+            default: undefined,
+          }),
+        });
+        expect(inputs.choice).to.be.undefined;
+      });
+      it("should throw for an invalid choice value", function () {
+        process.env.INPUT_CHOICE = "four";
+        expect(() =>
+          getInputs({
+            choice: stringInput({ choices: ["one", "two", "three"] }),
+          })
+        ).to.throw();
+      });
     });
 
     describe(arrayInput.name, function () {
@@ -123,6 +170,13 @@ describe("github-action", function () {
         process.env.INPUT_STUFF = "hello, there";
         const inputs: { stuff: ReadonlyArray<string> } = getInputs({
           stuff: arrayInput(),
+        });
+        expect(inputs.stuff).to.deep.equal(["hello", " there"]);
+      });
+      it("should return the expected value if it is defined and the options are an empty object", function () {
+        process.env.INPUT_STUFF = "hello, there";
+        const inputs: { stuff: ReadonlyArray<string> } = getInputs({
+          stuff: arrayInput({}),
         });
         expect(inputs.stuff).to.deep.equal(["hello", " there"]);
       });
