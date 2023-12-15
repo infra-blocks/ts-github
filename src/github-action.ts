@@ -86,18 +86,49 @@ export function stringInput(options: {
 export function stringInput(options: {
   default: undefined;
 }): InputValidator<string | undefined>;
+// TODO: figure out a way to automatically infer the union type instead of string. See tests.
+export function stringInput<T extends string>(options: {
+  choices: T[];
+}): InputValidator<T>;
+export function stringInput<T extends string>(options: {
+  default: T;
+  choices: T[];
+}): InputValidator<T>;
+export function stringInput<T extends string>(options: {
+  default: undefined;
+  choices: T[];
+}): InputValidator<T | undefined>;
 /**
  * Returns a validator for string inputs.
  *
  * @param options.default - If defined, the input becomes optional and when
  *                          not found, the default value is returned.
  */
-export function stringInput(options?: {
-  default?: string;
-}): InputValidator<string | undefined> {
+export function stringInput<T extends string>(options?: {
+  default?: T;
+  choices?: T[];
+}): InputValidator<T | undefined> {
+  const { choices } = options || {};
+
   return {
     parse(input: string | undefined) {
-      return parseInput(input, (input) => input, options);
+      return parseInput(
+        input,
+        (input) => {
+          if (choices == null || choices.length === 0) {
+            return input as T;
+          }
+          if (!choices.includes(input as T)) {
+            throw new Error(
+              `invalid value: ${input} for string input with choices: ${JSON.stringify(
+                choices
+              )}`
+            );
+          }
+          return input as T;
+        },
+        options
+      );
     },
   };
 }
