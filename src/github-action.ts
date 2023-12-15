@@ -77,7 +77,9 @@ function parseInput<T>(
   return transform(input);
 }
 
-export function stringInput(): InputValidator<string>;
+export function stringInput(
+  options?: Record<string, never>
+): InputValidator<string>;
 export function stringInput(options: {
   default: string;
 }): InputValidator<string>;

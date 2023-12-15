@@ -87,6 +87,14 @@ describe("github-action", function () {
         });
         expect(inputs.test2).to.equal("good");
       });
+      it("should return the expected value when the options are an empty object", function () {
+        process.env.INPUT_STUFF = "empty-object";
+        // Adding types to make sure it compiles as expected.
+        const inputs: { stuff: string } = getInputs({
+          stuff: stringInput({}),
+        });
+        expect(inputs.stuff).to.equal("empty-object");
+      });
     });
 
     describe(arrayInput.name, function () {
@@ -123,6 +131,13 @@ describe("github-action", function () {
         process.env.INPUT_STUFF = "hello, there";
         const inputs: { stuff: ReadonlyArray<string> } = getInputs({
           stuff: arrayInput(),
+        });
+        expect(inputs.stuff).to.deep.equal(["hello", " there"]);
+      });
+      it("should return the expected value if it is defined and the options are an empty object", function () {
+        process.env.INPUT_STUFF = "hello, there";
+        const inputs: { stuff: ReadonlyArray<string> } = getInputs({
+          stuff: arrayInput({}),
         });
         expect(inputs.stuff).to.deep.equal(["hello", " there"]);
       });
