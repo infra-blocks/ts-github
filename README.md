@@ -1,6 +1,28 @@
 # ts-github
 
+<<<<<<< HEAD
 GitHub and GitHub actions related utilities.
+=======
+This repository is a template to generate repositories meant to hold the source code
+of NPM packages written in TypeScript.
+
+Follow these steps after instantiating the template:
+- Remove the [trigger update from template workflow](.github/workflows/trigger-update-from-template.yml)
+- Update the .nvmrc version file to latest
+- Update the package.json
+  - Rename the package name and links
+  - Update the `engines` section
+- Update the dependencies
+- Run `nvm install`
+- Run `npm install`
+- Run `npm run compile && npm run lint && npm run test`
+- Edit the `.npmrc` file if you wish to change the defaults. Specifically, if you wish to make your package private.
+- Rename the header of this document to match the repository
+- Replace this section of this document to include a description of the new package
+- Configure code coverage
+- Add the publication labels on the new repository: `patch`, `minor`, `major`, `no version`.
+- Add branch protection rules
+>>>>>>> template/master
 
 ## Development
 
