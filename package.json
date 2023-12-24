@@ -1,6 +1,6 @@
 {
   "name": "@infra-blocks/github",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "GitHub and GitHub actions related utilities.",
   "exports": "./lib/index.js",
   "engines": {
