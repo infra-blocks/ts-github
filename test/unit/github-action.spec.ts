@@ -196,6 +196,13 @@ describe("github-action", function () {
           "for",
         ]);
       });
+      it("should respect the trim option", function () {
+        process.env.INPUT_TRIMME = "1 ,    2,   3    , 4";
+        const inputs: { trimMe: ReadonlyArray<string> } = getInputs({
+          trimMe: arrayInput({ separator: ",", trim: true }),
+        });
+        expect(inputs.trimMe).to.deep.equal(["1", "2", "3", "4"]);
+      });
     });
 
     describe(booleanInput.name, function () {

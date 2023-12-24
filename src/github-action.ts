@@ -135,14 +135,17 @@ export function stringInput<T extends string>(options?: {
 
 export function arrayInput(options?: {
   separator?: string | RegExp;
+  trim?: boolean;
 }): InputValidator<ReadonlyArray<string>>;
 export function arrayInput(options: {
   default: ReadonlyArray<string>;
   separator?: string | RegExp;
+  trim?: boolean;
 }): InputValidator<ReadonlyArray<string>>;
 export function arrayInput(options: {
   default: undefined;
   separator?: string | RegExp;
+  trim?: boolean;
 }): InputValidator<ReadonlyArray<string> | undefined>;
 /**
  * Returns a validator for arrays parsed out of strings.
@@ -153,15 +156,27 @@ export function arrayInput(options: {
  * @param options.default - If defined, the input becomes optional and when
  *                          not found, the default value is returned.
  * @param options.separator - The token separator. Defaults to ",".
+ * @param options.trim - Whether to trim the array tokens. False by default.
  */
 export function arrayInput(options?: {
   default?: ReadonlyArray<string>;
   separator?: string | RegExp;
+  trim?: boolean;
 }): InputValidator<ReadonlyArray<string> | undefined> {
-  const { separator = "," } = options || {};
+  const { separator = ",", trim = false } = options || {};
   return {
     parse(input: string | undefined) {
-      return parseInput(input, (input) => input.split(separator), options);
+      return parseInput(
+        input,
+        (input) => {
+          const tokens = input.split(separator);
+          if (!trim) {
+            return tokens;
+          }
+          return tokens.map((token) => token.trim());
+        },
+        options
+      );
     },
   };
 }
