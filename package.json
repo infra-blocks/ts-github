@@ -28,6 +28,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.10.3",
     "@types/sinon": "^17.0.2",
+    "@types/tmp": "^0.2.6",
     "@types/verror": "^1.10.6",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
@@ -40,6 +41,8 @@
     "mocha": "^10.2.0",
     "prettier": "^2.8.8",
     "sinon": "^17.0.1",
+    "tmp": "^0.2.1",
+    "tmp-promise": "^3.0.3",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   },

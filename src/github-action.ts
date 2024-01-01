@@ -1,5 +1,6 @@
 import VError from "verror";
 import * as core from "@actions/core";
+import { readFile } from "node:fs/promises";
 
 /**
  * Typed enum of possible GitHub actions events.
@@ -268,4 +269,40 @@ export function setOutputs(outputs: Outputs) {
   for (const [key, value] of Object.entries(outputs)) {
     core.setOutput(key, value);
   }
+}
+
+/**
+ * Parses the Github Actions outputs from the provided file as written by the core.setOutput
+ * utility.
+ *
+ * The core.setOutput utility stores the outputs as heredocs with randomly generated delimiters.
+ * This function parses those out and returns the remaining key value pairs as an object.
+ *
+ * If a key is provided more than once, the last value takes precedence.
+ *
+ * @param filePath - The outputs file path. Defaults to GITHUB_OUTPUT. Throws if neither the
+ *  parameter and the environment variable are provided.
+ *
+ * @return The outputs as a record of string.
+ */
+export async function parseOutputs(filePath?: string): Promise<Outputs> {
+  const outputsPath = filePath || process.env.GITHUB_OUTPUT;
+  if (outputsPath == null) {
+    throw new Error(
+      `no output file path provided as argument nor through the GITHUB_OUTPUT environment variable`
+    );
+  }
+
+  const result: Outputs = {};
+  const fileContents = await readFile(outputsPath, { encoding: "utf-8" });
+  const outputRegex =
+    /(?<key>.+?)<<(?<delimiter>.*?)\n(?<value>.*)\n\k<delimiter>\n/g;
+
+  let captures = outputRegex.exec(fileContents);
+  while (captures != null && captures.groups != null) {
+    result[captures.groups.key] = captures.groups.value;
+    captures = outputRegex.exec(fileContents);
+  }
+
+  return result;
 }
