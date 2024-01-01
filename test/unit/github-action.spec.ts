@@ -9,7 +9,7 @@ import {
   setOutputs,
   stringInput,
 } from "../../src/index.js";
-import { expect } from "@infra-blocks/test";
+import { expect, resetEnvFixture } from "@infra-blocks/test";
 import * as sinon from "sinon";
 import { withFile } from "tmp-promise";
 import * as core from "@actions/core";
@@ -46,11 +46,7 @@ describe("github-action", function () {
     });
   });
   describe(getInputs.name, function () {
-    const OLD_ENV = { ...process.env };
-
-    afterEach("reset env", function () {
-      process.env = { ...OLD_ENV };
-    });
+    afterEach("reset process.env", resetEnvFixture());
 
     describe(stringInput.name, function () {
       it("should throw if the input is not defined", function () {
@@ -334,11 +330,7 @@ describe("github-action", function () {
     }
   });
   describe(parseOutputs.name, function () {
-    const OLD_ENV = { ...process.env };
-
-    afterEach("reset env", function () {
-      process.env = { ...OLD_ENV };
-    });
+    afterEach("reset process.env", resetEnvFixture());
 
     it("should work with an empty file", async function () {
       await withFile(async (tempFile) => {
