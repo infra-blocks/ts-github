@@ -5,11 +5,14 @@ import {
   Event,
   getInputs,
   parseEvent,
+  parseOutputs,
   setOutputs,
   stringInput,
 } from "../../src/index.js";
 import { expect } from "@infra-blocks/test";
 import * as sinon from "sinon";
+import { withFile } from "tmp-promise";
+import * as core from "@actions/core";
 
 describe("github-action", function () {
   describe(parseEvent.name, function () {
@@ -329,5 +332,106 @@ describe("github-action", function () {
         );
       });
     }
+  });
+  describe(parseOutputs.name, function () {
+    const OLD_ENV = { ...process.env };
+
+    afterEach("reset env", function () {
+      process.env = { ...OLD_ENV };
+    });
+
+    it("should work with an empty file", async function () {
+      await withFile(async (tempFile) => {
+        const filePath = tempFile.path;
+        expect(await parseOutputs(filePath)).to.deep.equal({});
+      });
+    });
+    it("should work with a single string output", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const stringValue = "tata";
+        core.setOutput("toto", stringValue);
+        expect(await parseOutputs()).to.deep.equal({
+          toto: stringValue,
+        });
+      });
+    });
+    it("should work with weird keys", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const stringValue = "   anything    ";
+        core.setOutput("  t_0/T-o  ", stringValue);
+        expect(await parseOutputs()).to.deep.equal({
+          "  t_0/T-o  ": stringValue,
+        });
+      });
+    });
+    it("should work with a JSON array output", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const arrayValue = ["one", 2, false, null];
+        core.setOutput("array", arrayValue);
+        expect(await parseOutputs()).to.deep.equal({
+          array: JSON.stringify(arrayValue),
+        });
+      });
+    });
+    it("should work with a JSON object output", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const objectValue = {
+          string: "hello",
+          number: 5,
+          boolean: true,
+          array: ["1", 2, false, null],
+          null: null,
+        };
+        core.setOutput("object", objectValue);
+        expect(await parseOutputs()).to.deep.equal({
+          object: JSON.stringify(objectValue),
+        });
+      });
+    });
+    it("should work with several outputs", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const stringValue = "Hello World!";
+        const arrayValue = [1, "two", true, null];
+        const objectValue = {
+          string: "hello",
+          number: 5,
+          boolean: true,
+          array: ["1", 2, false, null],
+          null: null,
+        };
+        core.setOutput("string", stringValue);
+        core.setOutput("array", arrayValue);
+        core.setOutput("object", objectValue);
+        expect(await parseOutputs()).to.deep.equal({
+          string: stringValue,
+          array: JSON.stringify(arrayValue),
+          object: JSON.stringify(objectValue),
+        });
+      });
+    });
+    it("should work with repeating outputs", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const firstStringValue = "Hello World!";
+        const secondStringValue = "Anybody here?";
+        const thirdStringValue = "You want that output or what?";
+
+        core.setOutput("string", firstStringValue);
+        core.setOutput("string", secondStringValue);
+        core.setOutput("string", thirdStringValue);
+        expect(await parseOutputs()).to.deep.equal({
+          string: thirdStringValue,
+        });
+      });
+    });
+    it("should throw if no file path could be determined", async function () {
+      delete process.env.GITHUB_OUTPUT;
+      await expect(parseOutputs()).to.be.rejected;
+    });
   });
 });
