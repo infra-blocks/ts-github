@@ -278,19 +278,12 @@ function getInput(name: string): string | undefined {
 
 /**
  * GitHub action outputs are simple strings.
+ *
+ * Whatever isn't a string is JSON stringified. To be more explicit about it,
+ * this framework requires calling code to stringify themselves.
+ *
  */
 export type Outputs = Record<string, string>;
-
-/**
- * Sets all the provided outputs as the action's outputs.
- *
- * @param outputs - The outputs to set for this action.
- */
-export function setOutputs(outputs: Outputs) {
-  for (const [key, value] of Object.entries(outputs)) {
-    core.setOutput(key, value);
-  }
-}
 
 /**
  * Parses the Github Actions outputs from the provided file as written by the core.setOutput
@@ -326,4 +319,85 @@ export async function parseOutputs(filePath?: string): Promise<Outputs> {
   }
 
   return result;
+}
+
+export type ActionHandler<I> = (params: {
+  inputs: Readonly<I>;
+}) => Promise<Outputs>;
+
+export function runActionHandler<I>(
+  handler: ActionHandler<I>,
+  options: {
+    inputValidators: {
+      [K in keyof I]: InputValidator<I[K]>;
+    };
+  }
+): void;
+export function runActionHandler(handler: () => Promise<Outputs>): void;
+export function runActionHandler(
+  handler: () => Promise<Outputs>,
+  options: Record<string, never>
+): void;
+/**
+ * This function does away with the common boilerplate code related to running a GitHub Actions
+ * handler.
+ *
+ * The inputs are formally declared with the input validators argument. They are extracted out of the
+ * environment and passed on to the handler.
+ *
+ * The handler may or may not return {@link Outputs}. In the latter case, an empty object is expected.
+ *
+ * The outputs are forwarded to core.setOutput.
+ *
+ * The function also wraps the whole process with convenient debug statements that are turned on
+ * by setting ACTIONS_STEP_DEBUG to true.
+ *
+ * Any runtime errors occurring during this function's execution results in a call to core.setFailed.
+ *
+ * @param handler - The GitHub Actions handler.
+ * @param options.inputValidators - The set of validators to extract the inputs from the environment.
+ *
+ * @see https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging
+ */
+export function runActionHandler<I>(
+  handler: ActionHandler<I>,
+  options?: {
+    inputValidators?: {
+      [K in keyof I]: InputValidator<I[K]>;
+    };
+  }
+) {
+  const { inputValidators } = options || {};
+  try {
+    if (core.isDebug()) {
+      core.debug(`received env: ${JSON.stringify(process.env, null, 2)}`);
+      core.debug(`received context: ${JSON.stringify(context, null, 2)}`);
+    }
+
+    let promise;
+    if (inputValidators == null) {
+      core.debug("no inputs specified");
+      promise = (handler as () => Promise<Outputs>)();
+    } else {
+      const inputs = getInputs(inputValidators);
+
+      if (core.isDebug()) {
+        core.debug(`parsed out inputs: ${JSON.stringify(inputs)}`);
+      }
+      promise = handler({ inputs });
+    }
+
+    promise
+      .then((outputs) => {
+        for (const [key, value] of Object.entries(outputs)) {
+          if (core.isDebug()) {
+            core.debug(`setting output ${key}=${value}`);
+          }
+          core.setOutput(key, value);
+        }
+      })
+      .catch((err) => core.setFailed(VError.fullStack(err as Error)));
+  } catch (err) {
+    core.setFailed(VError.fullStack(err as Error));
+  }
 }

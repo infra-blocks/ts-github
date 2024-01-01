@@ -4,12 +4,13 @@ import {
   checkSupportedEvent,
   Event,
   getInputs,
+  Outputs,
   parseEvent,
   parseOutputs,
-  setOutputs,
+  runActionHandler,
   stringInput,
 } from "../../src/index.js";
-import { expect, resetEnvFixture } from "@infra-blocks/test";
+import { awaiter, expect, resetEnvFixture } from "@infra-blocks/test";
 import * as sinon from "sinon";
 import { withFile } from "tmp-promise";
 import * as core from "@actions/core";
@@ -392,31 +393,6 @@ describe("github-action", function () {
       ]);
     });
   });
-  describe(setOutputs.name, function () {
-    afterEach(function () {
-      sinon.restore();
-    });
-
-    /*
-    Only run this test outside the GitHub actions context.
-    Outputs are written to file on CI.
-     */
-    if (process.env.GITHUB_OUTPUT == null) {
-      it("should output all the properties", function () {
-        sinon.spy(process.stdout, "write");
-        setOutputs({
-          "output-1": "My first output",
-          OTHER_OUTPUT: "The other one, I guess",
-        });
-        expect(process.stdout.write).to.have.been.calledWith(
-          "::set-output name=output-1::My first output\n"
-        );
-        expect(process.stdout.write).to.have.been.calledWith(
-          "::set-output name=OTHER_OUTPUT::The other one, I guess\n"
-        );
-      });
-    }
-  });
   describe(parseOutputs.name, function () {
     afterEach("reset process.env", resetEnvFixture());
 
@@ -512,6 +488,84 @@ describe("github-action", function () {
     it("should throw if no file path could be determined", async function () {
       delete process.env.GITHUB_OUTPUT;
       await expect(parseOutputs()).to.be.rejected;
+    });
+  });
+  describe(runActionHandler.name, function () {
+    afterEach("reset process.env", resetEnvFixture());
+
+    it("should work without inputs and outputs", async function () {
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const handler = sinon.fake.resolves<
+          [{ inputs: Record<string, never> }],
+          Promise<Record<string, never>>
+        >({});
+        const { func, promise } = awaiter(handler);
+
+        runActionHandler(func);
+        await promise;
+        expect(handler).to.have.been.calledOnceWith();
+        expect(await parseOutputs()).to.deep.equal({});
+      });
+    });
+    it("should work with outputs", async function () {
+      interface TestOutputs extends Outputs {
+        "my-beautiful-output": string;
+      }
+      const outputs: TestOutputs = {
+        "my-beautiful-output": "word",
+      };
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const handler = sinon.fake.resolves<[], Promise<TestOutputs>>(outputs);
+        const { func, promise } = awaiter(handler);
+
+        runActionHandler(() => func());
+        await promise;
+        expect(handler).to.have.been.calledOnceWith();
+        expect(await parseOutputs()).to.deep.equal(outputs);
+      });
+    });
+    it("should work with inputs", async function () {
+      interface Inputs {
+        left: string;
+        right: string;
+        military: string;
+        step: boolean;
+      }
+
+      await withFile(async (tempFile) => {
+        process.env.GITHUB_OUTPUT = tempFile.path;
+        const handler = sinon.fake.resolves<
+          [{ inputs: Inputs }],
+          Promise<Record<string, never>>
+        >({});
+        const { func, promise } = awaiter(handler);
+
+        process.env.INPUT_LEFT = "left";
+        process.env.INPUT_RIGHT = "right";
+        process.env.INPUT_MILITARY = "military";
+        process.env.INPUT_STEP = "false";
+
+        runActionHandler(func, {
+          inputValidators: {
+            left: stringInput(),
+            right: stringInput(),
+            military: stringInput(),
+            step: booleanInput(),
+          },
+        });
+        await promise;
+        expect(handler).to.have.been.calledOnceWith({
+          inputs: {
+            left: "left",
+            right: "right",
+            military: "military",
+            step: false,
+          },
+        });
+        expect(await parseOutputs()).to.deep.equal({});
+      });
     });
   });
 });
