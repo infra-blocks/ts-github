@@ -1,6 +1,7 @@
 import VError from "verror";
 import * as core from "@actions/core";
 import { readFile } from "node:fs/promises";
+import { isFunction, Provider } from "@infra-blocks/types";
 
 /**
  * Typed enum of possible GitHub actions events.
@@ -62,7 +63,7 @@ export interface InputValidator<T> {
 function parseInput<T>(
   input: string | undefined,
   transform: (input: string) => T,
-  options?: { default?: T }
+  options?: { default?: T | Provider<T> }
 ): T | undefined {
   const required =
     options == null ||
@@ -73,7 +74,21 @@ function parseInput<T>(
     if (required) {
       throw Error("input is missing value and no default was provided");
     }
-    return options?.default;
+    if (options == null) {
+      throw new Error("unexpected null options");
+    }
+
+    if (isFunction(options.default)) {
+      try {
+        return options.default();
+      } catch (err) {
+        throw new VError(
+          { cause: err as Error },
+          `default value provider threw`
+        );
+      }
+    }
+    return options.default;
   }
   return transform(input);
 }
@@ -82,10 +97,10 @@ export function stringInput(
   options?: Record<string, never>
 ): InputValidator<string>;
 export function stringInput(options: {
-  default: string;
+  default: string | Provider<string>;
 }): InputValidator<string>;
 export function stringInput(options: {
-  default: undefined;
+  default: undefined | Provider<string | undefined>;
 }): InputValidator<string | undefined>;
 // TODO: figure out a way to automatically infer the union type instead of string. See tests.
 export function stringInput<T extends string>(options: {
@@ -103,10 +118,11 @@ export function stringInput<T extends string>(options: {
  * Returns a validator for string inputs.
  *
  * @param options.default - If defined, the input becomes optional and when
- *                          not found, the default value is returned.
+ *  not found, the default value is returned. The default can also be a {@link Provider}. In which case, it is
+ *  only called when the input isn't found.
  */
 export function stringInput<T extends string>(options?: {
-  default?: T;
+  default?: T | Provider<T> | Provider<T | undefined>;
   choices?: T[];
 }): InputValidator<T | undefined> {
   const { choices } = options || {};
@@ -139,12 +155,12 @@ export function arrayInput(options?: {
   trim?: boolean;
 }): InputValidator<ReadonlyArray<string>>;
 export function arrayInput(options: {
-  default: ReadonlyArray<string>;
+  default: ReadonlyArray<string> | Provider<ReadonlyArray<string>>;
   separator?: string | RegExp;
   trim?: boolean;
 }): InputValidator<ReadonlyArray<string>>;
 export function arrayInput(options: {
-  default: undefined;
+  default: undefined | Provider<ReadonlyArray<string> | undefined>;
   separator?: string | RegExp;
   trim?: boolean;
 }): InputValidator<ReadonlyArray<string> | undefined>;
@@ -155,12 +171,16 @@ export function arrayInput(options: {
  * separators.
  *
  * @param options.default - If defined, the input becomes optional and when
- *                          not found, the default value is returned.
+ *  not found, the default value is returned. The default can also be a {@link Provider}. In which case, it is
+ *  only called when the input isn't found.
  * @param options.separator - The token separator. Defaults to ",".
  * @param options.trim - Whether to trim the array tokens. False by default.
  */
 export function arrayInput(options?: {
-  default?: ReadonlyArray<string>;
+  default?:
+    | ReadonlyArray<string>
+    | Provider<ReadonlyArray<string>>
+    | Provider<ReadonlyArray<string> | undefined>;
   separator?: string | RegExp;
   trim?: boolean;
 }): InputValidator<ReadonlyArray<string> | undefined> {
@@ -184,19 +204,20 @@ export function arrayInput(options?: {
 
 export function booleanInput(): InputValidator<boolean>;
 export function booleanInput(options: {
-  default: boolean;
+  default: boolean | Provider<boolean>;
 }): InputValidator<boolean>;
 export function booleanInput(options: {
-  default: undefined;
+  default: undefined | Provider<boolean | undefined>;
 }): InputValidator<boolean | undefined>;
 /**
  * Returns a validator for boolean inputs.
  *
  * @param options.default - If defined, the input becomes optional and when
- *                          not found, the default value is returned.
+ *  not found, the default value is returned. The default can also be a {@link Provider}. In which case, it is
+ *  only called when the input isn't found.
  */
 export function booleanInput(options?: {
-  default?: boolean;
+  default?: boolean | Provider<boolean> | Provider<boolean | undefined>;
 }): InputValidator<boolean | undefined> {
   return {
     parse(input: string | undefined) {
