@@ -78,6 +78,33 @@ describe("github-action", function () {
         const compilationTest: typeof inputs.canBeUndefined = undefined;
         expect(inputs.canBeUndefined).to.be.undefined;
       });
+      it("should return the default value from a provider if the input is not defined", function () {
+        const fakeProvider = sinon.fake.returns("toto");
+        const inputs: { defaultFromProvider: string } = getInputs({
+          defaultFromProvider: stringInput({ default: fakeProvider }),
+        });
+        expect(inputs.defaultFromProvider).to.equal("toto");
+        expect(fakeProvider).to.have.been.calledOnceWith();
+      });
+      it("should return the default value of undefined from a provider if the input is not defined", function () {
+        const fakeProvider = sinon.fake.returns(undefined);
+        const inputs: { undefinedFromProvider: string | undefined } = getInputs(
+          {
+            undefinedFromProvider: stringInput({ default: fakeProvider }),
+          }
+        );
+        expect(inputs.undefinedFromProvider).to.be.undefined;
+        expect(fakeProvider).to.have.been.calledOnceWith();
+      });
+      it("should not call the default provider when the input is provided", function () {
+        process.env.INPUT_WITHDEFAULTPROVIDER = "hello";
+        const fakeProvider = sinon.fake();
+        const inputs: { withDefaultProvider: string } = getInputs({
+          withDefaultProvider: stringInput({ default: fakeProvider }),
+        });
+        expect(inputs.withDefaultProvider).to.equal("hello");
+        expect(fakeProvider).to.not.have.been.called;
+      });
       it("should return the expected value if the input is defined", function () {
         process.env.INPUT_TEST2 = "good";
         // Adding types to make sure it compiles as expected.
@@ -143,13 +170,13 @@ describe("github-action", function () {
           })
         ).to.throw();
       });
-      it("should return the default value if one is provided and the value is not defined", function () {
+      it("should return the default value if the input is not defined", function () {
         const inputs: { cannotBeUndefined: ReadonlyArray<string> } = getInputs({
           cannotBeUndefined: arrayInput({ default: ["big-default"] }),
         });
         expect(inputs.cannotBeUndefined).to.deep.equal(["big-default"]);
       });
-      it("should return the default value if one is provided and the value is an empty string", function () {
+      it("should return the default value if the value is an empty string", function () {
         process.env.INPUT_CANNOTBEUNDEFINED = "";
         const inputs: { cannotBeUndefined: ReadonlyArray<string> } = getInputs({
           cannotBeUndefined: arrayInput({ default: ["big-default"] }),
@@ -164,6 +191,41 @@ describe("github-action", function () {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const compilationTest: typeof inputs.canBeUndefined = undefined;
         expect(inputs.canBeUndefined).to.be.undefined;
+      });
+      it("should return the default value from a provider if the input is not defined", function () {
+        const fakeProvider = sinon.fake.returns(["toto"]);
+        const inputs: { defaultFromProvider: ReadonlyArray<string> } =
+          getInputs({
+            defaultFromProvider: arrayInput({ default: fakeProvider }),
+          });
+        expect(inputs.defaultFromProvider).to.deep.equal(["toto"]);
+        expect(fakeProvider).to.have.been.calledOnceWith();
+      });
+      it("should return the default value of undefined from a provider if the input is not defined", function () {
+        const fakeProvider = sinon.fake.returns(undefined);
+        const inputs: {
+          undefinedFromProvider: ReadonlyArray<string> | undefined;
+        } = getInputs({
+          undefinedFromProvider: arrayInput({ default: fakeProvider }),
+        });
+        expect(inputs.undefinedFromProvider).to.be.undefined;
+        expect(fakeProvider).to.have.been.calledOnceWith();
+      });
+      it("should not call the default provider when the input is provided", function () {
+        process.env.INPUT_WITHDEFAULTPROVIDER = "big,can,of,toto,whopping";
+        const fakeProvider = sinon.fake();
+        const inputs: { withDefaultProvider: ReadonlyArray<string> } =
+          getInputs({
+            withDefaultProvider: arrayInput({ default: fakeProvider }),
+          });
+        expect(inputs.withDefaultProvider).to.deep.equal([
+          "big",
+          "can",
+          "of",
+          "toto",
+          "whopping",
+        ]);
+        expect(fakeProvider).to.not.have.been.called;
       });
       it("should return the expected value if it is defined", function () {
         process.env.INPUT_STUFF = "hello, there";
@@ -233,6 +295,32 @@ describe("github-action", function () {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const compilationTest: typeof inputs.canBeUndefined = undefined;
         expect(inputs.canBeUndefined).to.be.undefined;
+      });
+      it("should return the default value from a provider if the input is not defined", function () {
+        const fakeProvider = sinon.fake.returns(true);
+        const inputs: { defaultFromProvider: boolean } = getInputs({
+          defaultFromProvider: booleanInput({ default: fakeProvider }),
+        });
+        expect(inputs.defaultFromProvider).to.be.true;
+        expect(fakeProvider).to.have.been.calledOnceWith();
+      });
+      it("should return the default value of undefined from a provider if the input is not defined", function () {
+        const fakeProvider = sinon.fake.returns(undefined);
+        const inputs: { undefinedFromProvider: boolean | undefined } =
+          getInputs({
+            undefinedFromProvider: booleanInput({ default: fakeProvider }),
+          });
+        expect(inputs.undefinedFromProvider).to.be.undefined;
+        expect(fakeProvider).to.have.been.calledOnceWith();
+      });
+      it("should not call the default provider when the input is provided", function () {
+        process.env.INPUT_WITHDEFAULTPROVIDER = "false";
+        const fakeProvider = sinon.fake();
+        const inputs: { withDefaultProvider: boolean } = getInputs({
+          withDefaultProvider: booleanInput({ default: fakeProvider }),
+        });
+        expect(inputs.withDefaultProvider).to.be.false;
+        expect(fakeProvider).to.not.have.been.called;
       });
       it("should return the expected value if the input is true", function () {
         process.env.INPUT_VALUE = "true";
