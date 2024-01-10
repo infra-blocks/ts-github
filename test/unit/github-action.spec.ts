@@ -122,6 +122,13 @@ describe("github-action", function () {
         });
         expect(inputs.stuff).to.equal("empty-object");
       });
+      it("should respect the input name override", function () {
+        process.env["INPUT_INPUT-NAME"] = "ok";
+        const inputs = getInputs({
+          renamed: stringInput({ name: "input-name" }),
+        });
+        expect(inputs.renamed).to.equal("ok");
+      });
       it("should work with a valid choice value", function () {
         process.env.INPUT_CHOICE = "two";
 
@@ -242,6 +249,13 @@ describe("github-action", function () {
         });
         expect(inputs.stuff).to.deep.equal(["hello", " there"]);
       });
+      it("should respect the input name override", function () {
+        process.env["INPUT_ARRAY-INPUT-NAME"] = "ok,renamed";
+        const inputs = getInputs({
+          renamed: arrayInput({ name: "array-input-name" }),
+        });
+        expect(inputs.renamed).to.deep.equal(["ok", "renamed"]);
+      });
       it("should respect the separator option", function () {
         process.env.INPUT_SPACEWORDS = "hello there is it me you looking for";
         const inputs: { spaceWords: ReadonlyArray<string> } = getInputs({
@@ -338,6 +352,21 @@ describe("github-action", function () {
           value: booleanInput(),
         });
         expect(inputs.value).to.be.false;
+      });
+      it("should work when the options are an empty object", function () {
+        process.env.INPUT_VALUE = "true";
+        // Adding types to make sure it compiles as expected.
+        const inputs: { value: boolean } = getInputs({
+          value: booleanInput({}),
+        });
+        expect(inputs.value).to.be.true;
+      });
+      it("should respect the input name override", function () {
+        process.env["INPUT_BOOLEAN-INPUT-NAME"] = "false";
+        const inputs = getInputs({
+          renamed: booleanInput({ name: "boolean-input-name" }),
+        });
+        expect(inputs.renamed).to.be.false;
       });
       it("should throw if the input is an invalid boolean", function () {
         process.env.INPUT_VALUE = "falsy";
