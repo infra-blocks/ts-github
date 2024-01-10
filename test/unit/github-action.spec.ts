@@ -527,8 +527,8 @@ describe("github-action", function () {
         process.env.GITHUB_OUTPUT = tempFile.path;
         const handler = sinon.fake.resolves<
           [{ inputs: Record<string, never> }],
-          Promise<Record<string, never>>
-        >({});
+          Promise<undefined>
+        >(undefined);
         const { func, promise } = awaiter(handler);
 
         runActionHandler(func);
@@ -559,39 +559,31 @@ describe("github-action", function () {
       interface Inputs {
         left: string;
         right: string;
-        military: string;
-        step: boolean;
+        boolean: boolean;
       }
 
       await withFile(async (tempFile) => {
         process.env.GITHUB_OUTPUT = tempFile.path;
         const handler = sinon.fake.resolves<
-          [{ inputs: Inputs }],
+          [Inputs],
           Promise<Record<string, never>>
         >({});
         const { func, promise } = awaiter(handler);
 
         process.env.INPUT_LEFT = "left";
-        process.env.INPUT_RIGHT = "right";
-        process.env.INPUT_MILITARY = "military";
-        process.env.INPUT_STEP = "false";
+        process.env["INPUT_RENAMED-STRING-INPUT"] = "right";
+        process.env.INPUT_BOOLEAN = "false";
 
         runActionHandler(func, {
-          inputValidators: {
-            left: stringInput(),
-            right: stringInput(),
-            military: stringInput(),
-            step: booleanInput(),
-          },
+          left: stringInput(),
+          right: stringInput({ name: "renamed-string-input" }),
+          boolean: booleanInput(),
         });
         await promise;
         expect(handler).to.have.been.calledOnceWith({
-          inputs: {
-            left: "left",
-            right: "right",
-            military: "military",
-            step: false,
-          },
+          left: "left",
+          right: "right",
+          boolean: false,
         });
         expect(await parseOutputs()).to.deep.equal({});
       });

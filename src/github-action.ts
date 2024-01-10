@@ -1,3 +1,4 @@
+import { Nullable } from "@infra-blocks/types";
 import VError from "verror";
 import * as core from "@actions/core";
 import { readFile } from "node:fs/promises";
@@ -349,53 +350,42 @@ export async function parseOutputs(filePath?: string): Promise<Outputs> {
   return result;
 }
 
-export type ActionHandler<I> = (params: {
-  inputs: Readonly<I>;
-}) => Promise<Outputs>;
-
-export function runActionHandler<I>(
-  handler: ActionHandler<I>,
-  options: {
-    inputValidators: {
-      [K in keyof I]: InputValidator<I[K]>;
-    };
-  }
-): void;
-export function runActionHandler(handler: () => Promise<Outputs>): void;
 export function runActionHandler(
-  handler: () => Promise<Outputs>,
-  options: Record<string, never>
+  handler: () => Promise<Nullable<Outputs>>
+): void;
+export function runActionHandler<I>(
+  handler: (inputs: Readonly<I>) => Promise<Nullable<Outputs>>,
+  inputValidators: {
+    [K in keyof I]: InputValidator<I[K]>;
+  }
 ): void;
 /**
  * This function does away with the common boilerplate code related to running a GitHub Actions
  * handler.
  *
- * The inputs are formally declared with the input validators argument. They are extracted out of the
- * environment and passed on to the handler.
- *
- * The handler may or may not return {@link Outputs}. In the latter case, an empty object is expected.
- *
- * The outputs are forwarded to core.setOutput.
- *
- * The function also wraps the whole process with convenient debug statements that are turned on
+ * It wraps the whole process with convenient debug statements that are turned on
  * by setting ACTIONS_STEP_DEBUG to true.
+ *
+ * The optional inputs can be declared with the input validators argument. They are extracted out of the
+ * environment and passed on to the handler when provided.
+ *
+ * The handler can return {@link Outputs} and those are forwarded automatically to core.setOutput at the
+ * end of the run.
  *
  * Any runtime errors occurring during this function's execution results in a call to core.setFailed.
  *
  * @param handler - The GitHub Actions handler.
- * @param options.inputValidators - The set of validators to extract the inputs from the environment.
+ * @param inputValidators - The optional map of validators to extract the inputs from the environment.
+ *  See {@link getInputs}
  *
  * @see https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging
  */
 export function runActionHandler<I>(
-  handler: ActionHandler<I>,
-  options?: {
-    inputValidators?: {
-      [K in keyof I]: InputValidator<I[K]>;
-    };
+  handler: (inputs: Readonly<I>) => Promise<Nullable<Outputs>>,
+  inputValidators?: {
+    [K in keyof I]: InputValidator<I[K]>;
   }
 ) {
-  const { inputValidators } = options || {};
   try {
     if (core.isDebug()) {
       core.debug(`received env: ${JSON.stringify(process.env, null, 2)}`);
@@ -412,11 +402,14 @@ export function runActionHandler<I>(
       if (core.isDebug()) {
         core.debug(`parsed out inputs: ${JSON.stringify(inputs)}`);
       }
-      promise = handler({ inputs });
+      promise = handler(inputs);
     }
 
     promise
       .then((outputs) => {
+        if (outputs == null) {
+          return;
+        }
         for (const [key, value] of Object.entries(outputs)) {
           if (core.isDebug()) {
             core.debug(`setting output ${key}=${value}`);
