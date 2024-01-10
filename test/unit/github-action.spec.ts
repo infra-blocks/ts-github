@@ -122,6 +122,13 @@ describe("github-action", function () {
         });
         expect(inputs.stuff).to.equal("empty-object");
       });
+      it("should respect the input name override", function () {
+        process.env["INPUT_INPUT-NAME"] = "ok";
+        const inputs = getInputs({
+          renamed: stringInput({ name: "input-name" }),
+        });
+        expect(inputs.renamed).to.equal("ok");
+      });
       it("should work with a valid choice value", function () {
         process.env.INPUT_CHOICE = "two";
 
@@ -242,6 +249,13 @@ describe("github-action", function () {
         });
         expect(inputs.stuff).to.deep.equal(["hello", " there"]);
       });
+      it("should respect the input name override", function () {
+        process.env["INPUT_ARRAY-INPUT-NAME"] = "ok,renamed";
+        const inputs = getInputs({
+          renamed: arrayInput({ name: "array-input-name" }),
+        });
+        expect(inputs.renamed).to.deep.equal(["ok", "renamed"]);
+      });
       it("should respect the separator option", function () {
         process.env.INPUT_SPACEWORDS = "hello there is it me you looking for";
         const inputs: { spaceWords: ReadonlyArray<string> } = getInputs({
@@ -338,6 +352,21 @@ describe("github-action", function () {
           value: booleanInput(),
         });
         expect(inputs.value).to.be.false;
+      });
+      it("should work when the options are an empty object", function () {
+        process.env.INPUT_VALUE = "true";
+        // Adding types to make sure it compiles as expected.
+        const inputs: { value: boolean } = getInputs({
+          value: booleanInput({}),
+        });
+        expect(inputs.value).to.be.true;
+      });
+      it("should respect the input name override", function () {
+        process.env["INPUT_BOOLEAN-INPUT-NAME"] = "false";
+        const inputs = getInputs({
+          renamed: booleanInput({ name: "boolean-input-name" }),
+        });
+        expect(inputs.renamed).to.be.false;
       });
       it("should throw if the input is an invalid boolean", function () {
         process.env.INPUT_VALUE = "falsy";
@@ -498,8 +527,8 @@ describe("github-action", function () {
         process.env.GITHUB_OUTPUT = tempFile.path;
         const handler = sinon.fake.resolves<
           [{ inputs: Record<string, never> }],
-          Promise<Record<string, never>>
-        >({});
+          Promise<undefined>
+        >(undefined);
         const { func, promise } = awaiter(handler);
 
         runActionHandler(func);
@@ -530,39 +559,31 @@ describe("github-action", function () {
       interface Inputs {
         left: string;
         right: string;
-        military: string;
-        step: boolean;
+        boolean: boolean;
       }
 
       await withFile(async (tempFile) => {
         process.env.GITHUB_OUTPUT = tempFile.path;
         const handler = sinon.fake.resolves<
-          [{ inputs: Inputs }],
+          [Inputs],
           Promise<Record<string, never>>
         >({});
         const { func, promise } = awaiter(handler);
 
         process.env.INPUT_LEFT = "left";
-        process.env.INPUT_RIGHT = "right";
-        process.env.INPUT_MILITARY = "military";
-        process.env.INPUT_STEP = "false";
+        process.env["INPUT_RENAMED-STRING-INPUT"] = "right";
+        process.env.INPUT_BOOLEAN = "false";
 
         runActionHandler(func, {
-          inputValidators: {
-            left: stringInput(),
-            right: stringInput(),
-            military: stringInput(),
-            step: booleanInput(),
-          },
+          left: stringInput(),
+          right: stringInput({ name: "renamed-string-input" }),
+          boolean: booleanInput(),
         });
         await promise;
         expect(handler).to.have.been.calledOnceWith({
-          inputs: {
-            left: "left",
-            right: "right",
-            military: "military",
-            step: false,
-          },
+          left: "left",
+          right: "right",
+          boolean: false,
         });
         expect(await parseOutputs()).to.deep.equal({});
       });
