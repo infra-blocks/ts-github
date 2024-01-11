@@ -1,6 +1,6 @@
 # ts-github
 
-GitHub and GitHub actions related utilities.
+GitHub related utilities.
 
 ## Development
 
