@@ -1,6 +1,6 @@
 {
   "name": "@infra-blocks/github",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "GitHub and GitHub actions related utilities.",
   "repository": {
     "type": "git",
