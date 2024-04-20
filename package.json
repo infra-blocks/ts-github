@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "name": "@infra-blocks/github",
   "version": "0.13.5",
   "description": "GitHub and GitHub actions related utilities.",
+=======
+  "name": "@infra-blocks/lib-template",
+  "version": "0.0.4",
+  "description": "This repository is a template to generate repositories meant to hold the source code of NPM packages written in TypeScript.",
+>>>>>>> template/master
   "keywords": [
     "github",
     "api"
