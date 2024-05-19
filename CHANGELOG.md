@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.7] - 2024-05-19
+
+### Changed
+
+- Migrated to the [infra-blocks](https://github.com/infra-blocks) organization.
+
 ## [0.13.6] - 2024-04-21
 
 ### Added
@@ -140,23 +146,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `GitHubClient`, `GitHubRepositoryClient`
     - GitHub Actions utilities
 
-[0.13.6]: https://github.com/infrastructure-blocks/ts-github/compare/v0.13.5...v0.13.6
-[0.13.5]: https://github.com/infrastructure-blocks/ts-github/compare/v0.13.4...v0.13.5
-[0.13.4]: https://github.com/infrastructure-blocks/ts-github/compare/v0.13.3...v0.13.4
-[0.13.3]: https://github.com/infrastructure-blocks/ts-github/compare/v0.13.2...v0.13.3
-[0.13.2]: https://github.com/infrastructure-blocks/ts-github/compare/v0.13.1...v0.13.2
-[0.13.1]: https://github.com/infrastructure-blocks/ts-github/compare/v0.13.0...v0.13.1
-[0.13.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.11.0...v0.12.0
-[0.11.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.10.0...v0.11.0
-[0.10.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.9.0...v0.10.0
-[0.9.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.7.0...v0.8.0
-[0.7.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.6.0...v0.7.0
-[0.6.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.3.1...v0.4.0
-[0.3.1]: https://github.com/infrastructure-blocks/ts-github/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/infrastructure-blocks/ts-github/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/infrastructure-blocks/ts-github/releases/tag/v0.1.0
+[0.13.7]: https://github.com/infra-blocks/ts-github/compare/v0.13.6...v0.13.7
+[0.13.6]: https://github.com/infra-blocks/ts-github/compare/v0.13.5...v0.13.6
+[0.13.5]: https://github.com/infra-blocks/ts-github/compare/v0.13.4...v0.13.5
+[0.13.4]: https://github.com/infra-blocks/ts-github/compare/v0.13.3...v0.13.4
+[0.13.3]: https://github.com/infra-blocks/ts-github/compare/v0.13.2...v0.13.3
+[0.13.2]: https://github.com/infra-blocks/ts-github/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/infra-blocks/ts-github/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/infra-blocks/ts-github/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/infra-blocks/ts-github/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/infra-blocks/ts-github/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/infra-blocks/ts-github/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/infra-blocks/ts-github/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/infra-blocks/ts-github/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/infra-blocks/ts-github/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/infra-blocks/ts-github/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/infra-blocks/ts-github/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/infra-blocks/ts-github/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/infra-blocks/ts-github/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/infra-blocks/ts-github/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/infra-blocks/ts-github/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/infra-blocks/ts-github/releases/tag/v0.1.0
